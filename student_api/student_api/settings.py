@@ -36,7 +36,12 @@ SECRET_KEY = os.getenv(
 )
 
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+if '*' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.extend(['.vercel.app', 'localhost', '127.0.0.1'])
+VERCEL_URL = os.getenv('VERCEL_URL')
+if VERCEL_URL:
+    ALLOWED_HOSTS.append(VERCEL_URL)
 RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -134,6 +139,14 @@ if DATABASE_URL:
         conn_max_age=600,
         conn_health_checks=True,
     )
+elif os.getenv('VERCEL'):
+    # On Vercel without external Postgres DATABASE_URL, fallback to SQLite in /tmp
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': '/tmp/db.sqlite3',
+        }
+    }
 
 # =============================================================================
 # PASSWORD VALIDATION
